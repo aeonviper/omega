@@ -34,25 +34,27 @@ public class GenericService {
 				stmt.setString(i++, (String) object);
 			} else if (object instanceof Long) {
 				stmt.setLong(i++, (Long) object);
-			} else if (object instanceof java.util.Date) {
-				stmt.setDate(i++, convertDate((java.util.Date) object));
-			} else if (object instanceof java.sql.Date) {
-				stmt.setDate(i++, (java.sql.Date) object);
-			} else if (object instanceof java.time.LocalDate) {
-				stmt.setObject(i++, object);
-			} else if (object instanceof java.time.LocalDateTime) {
-				stmt.setObject(i++, object);
 			} else if (object instanceof Integer) {
 				stmt.setInt(i++, (Integer) object);
 			} else if (object instanceof Boolean) {
 				stmt.setBoolean(i++, (Boolean) object);
 			} else if (object instanceof Enum) {
 				stmt.setString(i++, ((Enum) object).name());
+			} else if (object instanceof java.sql.Timestamp) {
+				stmt.setTimestamp(i++, (java.sql.Timestamp) object);
+			} else if (object instanceof java.sql.Date) {
+				stmt.setDate(i++, (java.sql.Date) object);
+			} else if (object instanceof java.time.LocalDate) {
+				stmt.setObject(i++, object);
+			} else if (object instanceof java.time.LocalDateTime) {
+				stmt.setObject(i++, object);
+			} else if (object instanceof java.util.Date) {
+				stmt.setDate(i++, convertDate((java.util.Date) object));
 			}
 		}
 	}
 
-	public static <T> String join(T[] array, String delimiter) {
+	public static <T> String join(T[] array, String delimiter, String open, String close) {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
 		for (T t : array) {
@@ -61,12 +63,22 @@ public class GenericService {
 			} else {
 				first = false;
 			}
+			if (open != null) {
+				sb.append(open);
+			}
 			sb.append(t);
+			if (close != null) {
+				sb.append(close);
+			}
 		}
 		return sb.toString();
 	}
 
-	public static <T> String join(List<T> list, String delimiter) {
+	public static <T> String join(T[] array, String delimiter) {
+		return join(array, delimiter, null, null);
+	}
+
+	public static <T> String join(List<T> list, String delimiter, String open, String close) {
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
 		for (T t : list) {
@@ -75,9 +87,19 @@ public class GenericService {
 			} else {
 				first = false;
 			}
+			if (open != null) {
+				sb.append(open);
+			}
 			sb.append(t);
+			if (close != null) {
+				sb.append(close);
+			}
 		}
 		return sb.toString();
+	}
+
+	public static <T> String join(List<T> list, String delimiter) {
+		return join(list, delimiter, null, null);
 	}
 
 	public static String repeat(String element, int multiplier, String delimiter) {

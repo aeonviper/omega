@@ -10,9 +10,15 @@ import java.util.List;
 import omega.core.BeanUtility;
 import omega.core.Core;
 
-public abstract class Builder<T> {
+public class Builder<T> {
 
-	public abstract T build(ResultSet rs) throws SQLException;
+	public T build(ResultData rd) throws SQLException {
+		return null;
+	}
+	
+	public T build(ResultSet rs) throws SQLException {
+		return build(new ResultData(rs));
+	}
 
 	public static Builder<Object[]> build(Specification[] specificationArray) {
 		return new Builder<Object[]>() {
