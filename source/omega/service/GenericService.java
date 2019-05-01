@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +41,8 @@ public class GenericService {
 				stmt.setBoolean(i++, (Boolean) object);
 			} else if (object instanceof Enum) {
 				stmt.setString(i++, ((Enum) object).name());
+			} else if (object instanceof java.math.BigDecimal) {
+				stmt.setObject(i++, (java.math.BigDecimal) object);
 			} else if (object instanceof java.sql.Timestamp) {
 				stmt.setTimestamp(i++, (java.sql.Timestamp) object);
 			} else if (object instanceof java.sql.Date) {
@@ -250,7 +253,7 @@ public class GenericService {
 	}
 
 	@Transactional(type = TransactionType.READONLY)
-	public <T> List<T> read(boolean asList, Class<T> clazz, String sql, Object... array) {
+	public <T> List<T> read(boolean asList, Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
 		List<T> resultList = new ArrayList<>();
 
 		Map<String, String> fieldMap = new HashMap<>();
@@ -276,7 +279,17 @@ public class GenericService {
 							String databaseFieldName = metaData.getColumnName(column).toLowerCase();
 							String entityFieldName = fieldMap.get(databaseFieldName);
 							if (entityFieldName != null) {
-								BeanUtility.instance().setProperty(entity, entityFieldName, rs.getObject(column));
+								if (columnTypeMap != null && !columnTypeMap.isEmpty() && columnTypeMap.containsKey(entityFieldName)) {
+									BeanUtility.instance().setProperty(entity, entityFieldName, rs.getObject(column, columnTypeMap.get(entityFieldName)));
+								} else {
+									Object value = rs.getObject(column);
+									if (classMap != null && !classMap.isEmpty() && value != null) {
+										if (classMap.containsKey(value.getClass())) {
+											value = rs.getObject(column, classMap.get(value.getClass()));
+										}
+									}
+									BeanUtility.instance().setProperty(entity, entityFieldName, value);
+								}
 							}
 						}
 					} catch (IllegalAccessException | InvocationTargetException e) {
@@ -339,16 +352,24 @@ public class GenericService {
 		return find(builder, sql, array);
 	}
 
-	public <T> List<T> list(Class<T> clazz, String sql, Object... array) {
-		return read(true, clazz, sql, array);
+	public <T> List<T> list(Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
+		return read(true, clazz, classMap, columnTypeMap, sql, array);
 	}
 
-	public <T> T find(Class<T> clazz, String sql, Object... array) {
-		List<T> list = read(false, clazz, sql, array);
+	public <T> List<T> list(Class<T> clazz, String sql, Object... array) {
+		return list(clazz, null, null, sql, array);
+	}
+
+	public <T> T find(Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
+		List<T> list = read(false, clazz, classMap, columnTypeMap, sql, array);
 		if (!list.isEmpty()) {
 			return list.get(0);
 		}
 		return null;
+	}
+
+	public <T> T find(Class<T> clazz, String sql, Object... array) {
+		return find(clazz, null, null, sql, array);
 	}
 
 }
