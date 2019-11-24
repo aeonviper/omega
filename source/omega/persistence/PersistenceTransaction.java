@@ -2,8 +2,6 @@ package omega.persistence;
 
 import java.sql.Connection;
 
-import javax.sql.DataSource;
-
 import omega.annotation.TransactionType;
 
 public class PersistenceTransaction {

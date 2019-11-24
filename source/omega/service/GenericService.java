@@ -7,8 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +128,6 @@ public class GenericService {
 		Connection connection = persistenceService.get().getConnection();
 		// System.out.println("connection = " + connection);
 		PreparedStatement stmt = null;
-		ResultSet rs = null;
 		try {
 			stmt = connection.prepareStatement(sql);
 			prepare(stmt, array);
@@ -139,13 +138,6 @@ public class GenericService {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
 			if (stmt != null) {
 				try {
 					stmt.close();
@@ -203,6 +195,62 @@ public class GenericService {
 		return resultList;
 	}
 
+	@Transactional(type = TransactionType.READWRITE)
+	public <T> void batch(String sql, Decorator<T> toDecorator, Preparer<T> preparer, List<T> entityList) {
+		int[] result = null;
+		Connection connection = persistenceService.get().getConnection();
+		// System.out.println("connection = " + connection);
+		PreparedStatement stmt = null;
+		final int batchSize = 1000;
+		int count = 0;
+		try {
+			stmt = connection.prepareStatement(sql);
+			for (T entity : entityList) {
+				if (toDecorator != null) {
+					toDecorator.decorate(entity);
+				}
+				stmt.clearParameters();
+				prepare(stmt, preparer.toFieldArray(entity));
+				stmt.addBatch();
+
+				if (++count % batchSize == 0) {
+					result = stmt.executeBatch();
+					if (!checkBatch(result)) {
+						throw new RuntimeException("Batch insert exception");
+					}
+				}
+			}
+
+			result = stmt.executeBatch();
+			if (!checkBatch(result)) {
+				throw new RuntimeException("Batch insert exception");
+			}
+
+			stmt.close();
+			stmt = null;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		} finally {
+			if (stmt != null) {
+				try {
+					stmt.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	public static boolean checkBatch(int[] result) {
+		for (int r : result) {
+			if (r == 0) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	// medium level
 
 	@Transactional(type = TransactionType.READWRITE)
@@ -252,12 +300,21 @@ public class GenericService {
 		}
 	}
 
+	public static List<Field> getAllFields(List<Field> fieldList, Class<?> type) {
+		fieldList.addAll(Arrays.asList(type.getDeclaredFields()));
+		if (type.getSuperclass() != null) {
+			getAllFields(fieldList, type.getSuperclass());
+		}
+		return fieldList;
+	}
+
 	@Transactional(type = TransactionType.READONLY)
 	public <T> List<T> read(boolean asList, Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
 		List<T> resultList = new ArrayList<>();
 
 		Map<String, String> fieldMap = new HashMap<>();
-		for (Field field : clazz.getDeclaredFields()) {
+		// for (Field field : clazz.getDeclaredFields()) {
+		for (Field field : getAllFields(new ArrayList<>(), clazz)) {
 			fieldMap.put(field.getName().toLowerCase(), field.getName());
 		}
 
