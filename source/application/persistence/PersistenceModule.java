@@ -1,4 +1,4 @@
-package omega.persistence;
+package application.persistence;
 
 import static com.google.inject.matcher.Matchers.annotatedWith;
 import static com.google.inject.matcher.Matchers.any;
@@ -12,6 +12,8 @@ import com.google.inject.AbstractModule;
 import com.zaxxer.hikari.HikariDataSource;
 
 import omega.annotation.Transactional;
+import omega.persistence.PersistenceService;
+import omega.persistence.TransactionInterceptor;
 
 public class PersistenceModule extends AbstractModule {
 
