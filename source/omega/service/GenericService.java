@@ -15,7 +15,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import omega.annotation.TransactionType;
 import omega.annotation.Transactional;
 import omega.core.BeanUtility;
 import omega.core.Core;
@@ -69,7 +68,9 @@ public class GenericService {
 			if (open != null) {
 				sb.append(open);
 			}
-			sb.append(t);
+			if (t != null) {
+				sb.append(t);
+			}
 			if (close != null) {
 				sb.append(close);
 			}
@@ -93,7 +94,9 @@ public class GenericService {
 			if (open != null) {
 				sb.append(open);
 			}
-			sb.append(t);
+			if (t != null) {
+				sb.append(t);
+			}
 			if (close != null) {
 				sb.append(close);
 			}
@@ -122,7 +125,7 @@ public class GenericService {
 
 	// low level
 
-	@Transactional(type = TransactionType.READWRITE)
+	@Transactional
 	public int write(String sql, Object... array) {
 		int result = 0;
 		Connection connection = persistenceService.get().getConnection();
@@ -149,7 +152,7 @@ public class GenericService {
 		return result;
 	}
 
-	@Transactional(type = TransactionType.READONLY)
+	@Transactional
 	public <T> List<T> read(boolean asList, Builder<T> builder, String sql, Object... array) {
 		List<T> resultList = new ArrayList<>();
 		Connection connection = persistenceService.get().getConnection();
@@ -195,7 +198,7 @@ public class GenericService {
 		return resultList;
 	}
 
-	@Transactional(type = TransactionType.READWRITE)
+	@Transactional
 	public <T> void batch(String sql, Decorator<T> toDecorator, Preparer<T> preparer, List<T> entityList) {
 		int[] result = null;
 		Connection connection = persistenceService.get().getConnection();
@@ -253,7 +256,7 @@ public class GenericService {
 
 	// medium level
 
-	@Transactional(type = TransactionType.READWRITE)
+	@Transactional
 	public <T> int insert(String tableName, T entity, String... array) {
 		String sql = "insert into " + tableName + " (" + join(array, ",") + ") values (" + repeat("?", array.length, ",") + ")";
 		List parameterList = new ArrayList<>();
@@ -268,7 +271,7 @@ public class GenericService {
 		}
 	}
 
-	@Transactional(type = TransactionType.READWRITE)
+	@Transactional
 	public <T> int update(String tableName, T entity, String[] qualifierArray, String... array) {
 		StringBuilder sqlQualifier = new StringBuilder();
 		boolean first = true;
@@ -308,7 +311,7 @@ public class GenericService {
 		return fieldList;
 	}
 
-	@Transactional(type = TransactionType.READONLY)
+	@Transactional
 	public <T> List<T> read(boolean asList, Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
 		List<T> resultList = new ArrayList<>();
 

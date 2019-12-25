@@ -2,14 +2,12 @@ package omega.persistence;
 
 import java.sql.Connection;
 
-import omega.annotation.TransactionType;
-
 public class PersistenceTransaction {
 
 	private Connection connection;
-	private TransactionType transactionType;
+	private String transactionType;
 
-	public PersistenceTransaction(Connection connection, TransactionType transactionType) {
+	public PersistenceTransaction(Connection connection, String transactionType) {
 		this.connection = connection;
 		this.transactionType = transactionType;
 	}
@@ -18,7 +16,7 @@ public class PersistenceTransaction {
 		return connection;
 	}
 
-	public TransactionType getTransactionType() {
+	public String getTransactionType() {
 		return transactionType;
 	}
 

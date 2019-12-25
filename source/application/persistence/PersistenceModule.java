@@ -22,30 +22,26 @@ public class PersistenceModule extends AbstractModule {
 
 	@Override
 	protected final void configure() {
-
-		HikariDataSource ds = new HikariDataSource();
-		ds.setDriverClassName("org.postgresql.Driver");
-
+		HikariDataSource mainDataSource = new HikariDataSource();
 		try {
-			URL url = Thread.currentThread().getContextClassLoader().getResource("application.properties");
+			URL url = Thread.currentThread().getContextClassLoader().getResource("application.configuration");
 			if (url != null) {
-				Properties properties = new Properties();
-				properties.load(url.openStream());
+				Properties propertyRepository = new Properties();
+				propertyRepository.load(url.openStream());
 
-				ds.setJdbcUrl(properties.getProperty("jdbc.url"));
-				ds.setUsername(properties.getProperty("database.username"));
-				ds.setPassword(properties.getProperty("database.password"));
+				mainDataSource.setDriverClassName(propertyRepository.getProperty("driver.class.name"));
+				mainDataSource.setJdbcUrl(propertyRepository.getProperty("main.database.url"));
+				mainDataSource.setUsername(propertyRepository.getProperty("main.database.username"));
+				mainDataSource.setPassword(propertyRepository.getProperty("main.database.password"));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		bind(PersistenceService.class).toInstance(new PersistenceService(ds));
+		bind(PersistenceService.class).toInstance(new PersistenceService(mainDataSource));
 		MethodInterceptor transactionInterceptor = new TransactionInterceptor();
 		requestInjection(transactionInterceptor);
-
 		bindInterceptor(any(), annotatedWith(Transactional.class), transactionInterceptor);
 
 	}
-
 }

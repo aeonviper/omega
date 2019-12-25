@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 public @interface Transactional {
 	Class<? extends Exception>[] rollbackOn() default RuntimeException.class;
 	Class<? extends Exception>[] ignore() default {};
-	TransactionType type() default TransactionType.READWRITE;
+	String type() default "";
 	TransactionIsolation isolation() default TransactionIsolation.DEFAULT;	
 	ExecutionType executionType() default ExecutionType.DEFAULT;
 }

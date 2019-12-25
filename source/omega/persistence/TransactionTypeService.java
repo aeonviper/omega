@@ -1,25 +1,15 @@
 package omega.persistence;
 
-import omega.annotation.TransactionType;
-
 public class TransactionTypeService {
 
-	private final static ThreadLocal<TransactionType> typeHolder = new ThreadLocal<TransactionType>();
+	private final static ThreadLocal<String> typeHolder = new ThreadLocal<String>();
 
-	public static void setReadOnly() {
-		typeHolder.set(TransactionType.READONLY);
+	public static void setTransactionType(String transactionType) {
+		typeHolder.set(transactionType);
 	}
 
-	public static void setReadWrite() {
-		typeHolder.set(TransactionType.READWRITE);
-	}
-
-	public static boolean isReadOnly() {
-		return typeHolder.get() == TransactionType.READONLY;
-	}
-
-	public static boolean isReadWrite() {
-		return typeHolder.get() == TransactionType.READWRITE;
+	public static String getTransactionType() {
+		return typeHolder.get();
 	}
 
 	public static boolean isSet() {

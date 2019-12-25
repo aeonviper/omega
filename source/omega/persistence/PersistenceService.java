@@ -1,18 +1,18 @@
 package omega.persistence;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.sql.DataSource;
 import com.google.inject.Singleton;
 
 @Singleton
 public class PersistenceService {
 
-	private enum Type {
-		SINGLE, DUAL;
-	}
-
-	private Type type;
-
+	public static final String defaultName = "";
 	private final ThreadLocal<PersistenceTransaction> persistenceTransactionRepository = new ThreadLocal<PersistenceTransaction>();
+	protected final Map<String, DataSource> dataSourceMap = new HashMap<>();
+	protected TransactionTypeAllower allower = null;
 
 	public PersistenceTransaction get() {
 		return persistenceTransactionRepository.get();
@@ -26,34 +26,44 @@ public class PersistenceService {
 		persistenceTransactionRepository.remove();
 	}
 
-	DataSource dataSourceReadWrite;
-	DataSource dataSourceReadOnly;
-	
-	public PersistenceService(DataSource dataSourceReadWrite) {
-		this.dataSourceReadWrite = dataSourceReadWrite;
-		type = Type.SINGLE;
-	}
-	
-	public PersistenceService(DataSource dataSourceReadWrite, DataSource dataSourceReadOnly) {
-		this.dataSourceReadWrite = dataSourceReadWrite;
-		this.dataSourceReadOnly = dataSourceReadOnly;
-		type = Type.DUAL;
+	public PersistenceService() {
+
 	}
 
-	public DataSource getDataSourceReadWrite() {
-		return dataSourceReadWrite;
+	public PersistenceService(DataSource dataSource) {
+		dataSourceMap.put(defaultName, dataSource);
 	}
 
-	public DataSource getDataSourceReadOnly() {
-		return dataSourceReadWrite;
+	public void registerDataSource(String name, DataSource dataSource) {
+		dataSourceMap.put(name, dataSource);
 	}
 
-	public boolean isSingle() {
-		return type == Type.SINGLE;
+	public void unregisterDataSource(String name) {
+		dataSourceMap.remove(name);
 	}
 
-	public boolean isDual() {
-		return type == Type.DUAL;
+	public void setAllower(TransactionTypeAllower allower) {
+		this.allower = allower;
+	}
+
+	public void unsetAllower() {
+		this.allower = null;
+	}
+
+	public DataSource getDataSource() {
+		return dataSourceMap.get(defaultName);
+	}
+
+	public DataSource getDataSource(String name) {
+		return dataSourceMap.get(name);
+	}
+
+	public boolean isMultiple() {
+		return dataSourceMap.size() > 1;
+	}
+
+	public boolean isAllowed(String current, String enter) {
+		return allower == null || allower.isAllowed(current, enter);
 	}
 
 }
