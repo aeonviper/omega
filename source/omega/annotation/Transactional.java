@@ -9,8 +9,12 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Transactional {
 	Class<? extends Exception>[] rollbackOn() default RuntimeException.class;
+
 	Class<? extends Exception>[] ignore() default {};
+
 	String type() default "";
-	TransactionIsolation isolation() default TransactionIsolation.DEFAULT;	
+
+	TransactionIsolation isolation() default TransactionIsolation.DEFAULT;
+
 	ExecutionType executionType() default ExecutionType.DEFAULT;
 }

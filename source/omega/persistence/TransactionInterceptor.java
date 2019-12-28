@@ -95,13 +95,9 @@ public class TransactionInterceptor implements MethodInterceptor {
 
 			}
 
-			// System.out.println(this.getClass().getSimpleName() + "> sqlSession:" + sqlSession);
-
 			Object result = null;
 
 			if (dataSource != null) {
-
-				// if sqlSessionFactory != null that means this is the beginning of the transaction
 
 				try {
 					result = methodInvocation.proceed();
@@ -121,8 +117,6 @@ public class TransactionInterceptor implements MethodInterceptor {
 				}
 
 			} else {
-
-				// an active transaction is already is progress, since persistenceService.get() != null, thus sqlSessionFactory is null
 
 				result = methodInvocation.proceed();
 

@@ -129,7 +129,6 @@ public class GenericService {
 	public int write(String sql, Object... array) {
 		int result = 0;
 		Connection connection = persistenceService.get().getConnection();
-		// System.out.println("connection = " + connection);
 		PreparedStatement stmt = null;
 		try {
 			stmt = connection.prepareStatement(sql);
@@ -156,7 +155,6 @@ public class GenericService {
 	public <T> List<T> read(boolean asList, Builder<T> builder, String sql, Object... array) {
 		List<T> resultList = new ArrayList<>();
 		Connection connection = persistenceService.get().getConnection();
-		// System.out.println("connection = " + connection);
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
@@ -202,7 +200,6 @@ public class GenericService {
 	public <T> void batch(String sql, Decorator<T> toDecorator, Preparer<T> preparer, List<T> entityList) {
 		int[] result = null;
 		Connection connection = persistenceService.get().getConnection();
-		// System.out.println("connection = " + connection);
 		PreparedStatement stmt = null;
 		final int batchSize = 1000;
 		int count = 0;
@@ -316,13 +313,11 @@ public class GenericService {
 		List<T> resultList = new ArrayList<>();
 
 		Map<String, String> fieldMap = new HashMap<>();
-		// for (Field field : clazz.getDeclaredFields()) {
 		for (Field field : getAllFields(new ArrayList<>(), clazz)) {
 			fieldMap.put(field.getName().toLowerCase(), field.getName());
 		}
 
 		Connection connection = persistenceService.get().getConnection();
-		// System.out.println("connection = " + connection);
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
@@ -332,11 +327,17 @@ public class GenericService {
 			if (rs != null) {
 				ResultSetMetaData metaData = rs.getMetaData();
 				int columnCount = metaData.getColumnCount();
+
+				String[] columnNameArray = new String[columnCount];
+				for (int column = 1; column <= columnCount; column++) {
+					columnNameArray[column - 1] = metaData.getColumnLabel(column).toLowerCase();
+				}
+
 				while (rs.next()) {
 					T entity = Core.getInjector().getInstance(clazz);
 					try {
 						for (int column = 1; column <= columnCount; column++) {
-							String databaseFieldName = metaData.getColumnName(column).toLowerCase();
+							String databaseFieldName = columnNameArray[column - 1];
 							String entityFieldName = fieldMap.get(databaseFieldName);
 							if (entityFieldName != null) {
 								if (columnTypeMap != null && !columnTypeMap.isEmpty() && columnTypeMap.containsKey(entityFieldName)) {
