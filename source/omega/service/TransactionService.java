@@ -1,6 +1,7 @@
 package omega.service;
 
 import com.google.inject.Singleton;
+
 import omega.annotation.Transactional;
 
 @Singleton

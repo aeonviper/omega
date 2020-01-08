@@ -15,10 +15,10 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import omega.annotation.Transactional;
-import omega.persistence.PersistenceService;
 import common.BeanUtility;
 import common.Core;
+import omega.annotation.Transactional;
+import omega.persistence.PersistenceService;
 
 public class GenericService {
 
