@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import omega.core.BeanUtility;
-import omega.core.Core;
+import common.BeanUtility;
+import common.Core;
 
 public class Builder<T> {
 

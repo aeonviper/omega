@@ -16,9 +16,9 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import omega.annotation.Transactional;
-import omega.core.BeanUtility;
-import omega.core.Core;
 import omega.persistence.PersistenceService;
+import common.BeanUtility;
+import common.Core;
 
 public class GenericService {
 
