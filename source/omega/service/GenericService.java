@@ -25,35 +25,10 @@ public class GenericService {
 	@Inject
 	PersistenceService persistenceService;
 
-	public static void prepare(PreparedStatement stmt, Object... array) throws SQLException {
-		int i = 1;
-		for (Object object : array) {
-			if (object == null) {
-				stmt.setNull(i++, java.sql.Types.NULL);
-			} else if (object instanceof String) {
-				stmt.setString(i++, (String) object);
-			} else if (object instanceof Long) {
-				stmt.setLong(i++, (Long) object);
-			} else if (object instanceof Integer) {
-				stmt.setInt(i++, (Integer) object);
-			} else if (object instanceof Boolean) {
-				stmt.setBoolean(i++, (Boolean) object);
-			} else if (object instanceof Enum) {
-				stmt.setString(i++, ((Enum) object).name());
-			} else if (object instanceof java.math.BigDecimal) {
-				stmt.setObject(i++, (java.math.BigDecimal) object);
-			} else if (object instanceof java.sql.Timestamp) {
-				stmt.setTimestamp(i++, (java.sql.Timestamp) object);
-			} else if (object instanceof java.sql.Date) {
-				stmt.setDate(i++, (java.sql.Date) object);
-			} else if (object instanceof java.time.LocalDate) {
-				stmt.setObject(i++, object);
-			} else if (object instanceof java.time.LocalDateTime) {
-				stmt.setObject(i++, object);
-			} else if (object instanceof java.util.Date) {
-				stmt.setDate(i++, convertDate((java.util.Date) object));
-			}
-		}
+	protected Preparer preparer = new Preparer();
+
+	public void setPreparer(Preparer preparer) {
+		this.preparer = preparer;
 	}
 
 	public static <T> String join(T[] array, String delimiter, String open, String close) {
@@ -116,23 +91,16 @@ public class GenericService {
 		return join(list, ",");
 	}
 
-	public static java.sql.Date convertDate(java.util.Date date) {
-		if (date != null) {
-			return new java.sql.Date(date.getTime());
-		}
-		return null;
-	}
-
 	// low level
 
 	@Transactional
-	public int write(String sql, Object... array) {
+	public int write(Preparer preparer, String sql, Object... array) {
 		int result = 0;
 		Connection connection = persistenceService.get().getConnection();
 		PreparedStatement stmt = null;
 		try {
 			stmt = connection.prepareStatement(sql);
-			prepare(stmt, array);
+			preparer.prepare(stmt, array);
 			result = stmt.executeUpdate();
 			stmt.close();
 			stmt = null;
@@ -151,15 +119,19 @@ public class GenericService {
 		return result;
 	}
 
+	public int write(String sql, Object... array) {
+		return write(this.preparer, sql, array);
+	}
+
 	@Transactional
-	public <T> List<T> read(boolean asList, Builder<T> builder, String sql, Object... array) {
+	public <T> List<T> read(Preparer preparer, boolean asList, Builder<T> builder, String sql, Object... array) {
 		List<T> resultList = new ArrayList<>();
 		Connection connection = persistenceService.get().getConnection();
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		try {
 			stmt = connection.prepareStatement(sql);
-			prepare(stmt, array);
+			preparer.prepare(stmt, array);
 			rs = stmt.executeQuery();
 			if (rs != null) {
 				while (rs.next()) {
@@ -196,8 +168,12 @@ public class GenericService {
 		return resultList;
 	}
 
+	public <T> List<T> read(boolean asList, Builder<T> builder, String sql, Object... array) {
+		return read(this.preparer, asList, builder, sql, array);
+	}
+
 	@Transactional
-	public <T> void batch(String sql, Decorator<T> toDecorator, Preparer<T> preparer, List<T> entityList) {
+	public <T> void batch(Preparer preparer, String sql, Decorator<T> toDecorator, BatchPreparer<T> batchPreparer, List<T> entityList) {
 		int[] result = null;
 		Connection connection = persistenceService.get().getConnection();
 		PreparedStatement stmt = null;
@@ -210,7 +186,7 @@ public class GenericService {
 					toDecorator.decorate(entity);
 				}
 				stmt.clearParameters();
-				prepare(stmt, preparer.toFieldArray(entity));
+				preparer.prepare(stmt, batchPreparer.toFieldArray(entity));
 				stmt.addBatch();
 
 				if (++count % batchSize == 0) {
@@ -240,6 +216,10 @@ public class GenericService {
 				}
 			}
 		}
+	}
+
+	public <T> void batch(String sql, Decorator<T> toDecorator, BatchPreparer<T> batchPreparer, List<T> entityList) {
+		batch(this.preparer, sql, toDecorator, batchPreparer, entityList);
 	}
 
 	public static boolean checkBatch(int[] result) {
@@ -309,7 +289,7 @@ public class GenericService {
 	}
 
 	@Transactional
-	public <T> List<T> read(boolean asList, Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
+	public <T> List<T> read(Preparer preparer, boolean asList, Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
 		List<T> resultList = new ArrayList<>();
 
 		Map<String, String> fieldMap = new HashMap<>();
@@ -322,7 +302,7 @@ public class GenericService {
 		ResultSet rs = null;
 		try {
 			stmt = connection.prepareStatement(sql);
-			prepare(stmt, array);
+			preparer.prepare(stmt, array);
 			rs = stmt.executeQuery();
 			if (rs != null) {
 				ResultSetMetaData metaData = rs.getMetaData();
@@ -387,6 +367,10 @@ public class GenericService {
 			}
 		}
 		return resultList;
+	}
+
+	public <T> List<T> read(boolean asList, Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
+		return read(this.preparer, asList, clazz, classMap, columnTypeMap, sql, array);
 	}
 
 	// high level
