@@ -13,7 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import common.BeanUtility;
 import common.Core;
@@ -25,10 +26,25 @@ public class GenericService {
 	@Inject
 	PersistenceService persistenceService;
 
-	protected Preparer preparer = new Preparer();
+	protected Preparer defaultPreparer = new Preparer();
 
-	public void setPreparer(Preparer preparer) {
-		this.preparer = preparer;
+	@Inject(optional = true)
+	public void setDefaultPreparer(@Named("DefaultPreparer") Preparer defaultPreparer) {
+		this.defaultPreparer = defaultPreparer;
+	}
+
+	protected Map<Class, Class> defaultColumnClassMap = null;
+
+	@Inject(optional = true)
+	public void setDefaultColumnClassMap(@Named("DefaultColumnClassMap") Map<Class, Class> defaultColumnClassMap) {
+		this.defaultColumnClassMap = defaultColumnClassMap;
+	}
+
+	protected Map<String, Class> defaultColumnTypeMap = null;
+
+	@Inject(optional = true)
+	public void setDefaultColumnTypeMap(@Named("DefaultColumnTypeMap") Map<String, Class> defaultColumnTypeMap) {
+		this.defaultColumnTypeMap = defaultColumnTypeMap;
 	}
 
 	public static <T> String join(T[] array, String delimiter, String open, String close) {
@@ -120,7 +136,7 @@ public class GenericService {
 	}
 
 	public int write(String sql, Object... array) {
-		return write(this.preparer, sql, array);
+		return write(this.defaultPreparer, sql, array);
 	}
 
 	@Transactional
@@ -169,7 +185,7 @@ public class GenericService {
 	}
 
 	public <T> List<T> read(boolean asList, Builder<T> builder, String sql, Object... array) {
-		return read(this.preparer, asList, builder, sql, array);
+		return read(this.defaultPreparer, asList, builder, sql, array);
 	}
 
 	@Transactional
@@ -219,7 +235,7 @@ public class GenericService {
 	}
 
 	public <T> void batch(String sql, Decorator<T> toDecorator, BatchPreparer<T> batchPreparer, List<T> entityList) {
-		batch(this.preparer, sql, toDecorator, batchPreparer, entityList);
+		batch(this.defaultPreparer, sql, toDecorator, batchPreparer, entityList);
 	}
 
 	public static boolean checkBatch(int[] result) {
@@ -289,7 +305,7 @@ public class GenericService {
 	}
 
 	@Transactional
-	public <T> List<T> read(Preparer preparer, boolean asList, Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
+	public <T> List<T> read(Preparer preparer, boolean asList, Class<T> clazz, Map<Class, Class> columnClassMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
 		List<T> resultList = new ArrayList<>();
 
 		Map<String, String> fieldMap = new HashMap<>();
@@ -324,9 +340,9 @@ public class GenericService {
 									BeanUtility.instance().setProperty(entity, entityFieldName, rs.getObject(column, columnTypeMap.get(entityFieldName)));
 								} else {
 									Object value = rs.getObject(column);
-									if (classMap != null && !classMap.isEmpty() && value != null) {
-										if (classMap.containsKey(value.getClass())) {
-											value = rs.getObject(column, classMap.get(value.getClass()));
+									if (columnClassMap != null && !columnClassMap.isEmpty() && value != null) {
+										if (columnClassMap.containsKey(value.getClass())) {
+											value = rs.getObject(column, columnClassMap.get(value.getClass()));
 										}
 									}
 									BeanUtility.instance().setProperty(entity, entityFieldName, value);
@@ -369,8 +385,8 @@ public class GenericService {
 		return resultList;
 	}
 
-	public <T> List<T> read(boolean asList, Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
-		return read(this.preparer, asList, clazz, classMap, columnTypeMap, sql, array);
+	public <T> List<T> read(boolean asList, Class<T> clazz, Map<Class, Class> columnClassMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
+		return read(this.defaultPreparer, asList, clazz, columnClassMap, columnTypeMap, sql, array);
 	}
 
 	// high level
@@ -397,16 +413,16 @@ public class GenericService {
 		return find(builder, sql, array);
 	}
 
-	public <T> List<T> list(Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
-		return read(true, clazz, classMap, columnTypeMap, sql, array);
+	public <T> List<T> list(Class<T> clazz, Map<Class, Class> columnClassMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
+		return read(true, clazz, columnClassMap, columnTypeMap, sql, array);
 	}
 
 	public <T> List<T> list(Class<T> clazz, String sql, Object... array) {
-		return list(clazz, null, null, sql, array);
+		return list(clazz, defaultColumnClassMap, defaultColumnTypeMap, sql, array);
 	}
 
-	public <T> T find(Class<T> clazz, Map<Class, Class> classMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
-		List<T> list = read(false, clazz, classMap, columnTypeMap, sql, array);
+	public <T> T find(Class<T> clazz, Map<Class, Class> columnClassMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
+		List<T> list = read(false, clazz, columnClassMap, columnTypeMap, sql, array);
 		if (!list.isEmpty()) {
 			return list.get(0);
 		}
@@ -414,7 +430,7 @@ public class GenericService {
 	}
 
 	public <T> T find(Class<T> clazz, String sql, Object... array) {
-		return find(clazz, null, null, sql, array);
+		return find(clazz, defaultColumnClassMap, defaultColumnTypeMap, sql, array);
 	}
 
 }
