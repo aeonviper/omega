@@ -189,11 +189,10 @@ public class GenericService {
 	}
 
 	@Transactional
-	public <T> void batch(Preparer preparer, String sql, Decorator<T> toDecorator, BatchPreparer<T> batchPreparer, List<T> entityList) {
+	public <T> void batch(Preparer preparer, int batchSize, String sql, Decorator<T> toDecorator, BatchPreparer<T> batchPreparer, List<T> entityList) {
 		int[] result = null;
 		Connection connection = persistenceService.get().getConnection();
 		PreparedStatement stmt = null;
-		final int batchSize = 1000;
 		int count = 0;
 		try {
 			stmt = connection.prepareStatement(sql);
@@ -235,7 +234,11 @@ public class GenericService {
 	}
 
 	public <T> void batch(String sql, Decorator<T> toDecorator, BatchPreparer<T> batchPreparer, List<T> entityList) {
-		batch(this.defaultPreparer, sql, toDecorator, batchPreparer, entityList);
+		batch(this.defaultPreparer, 1000, sql, toDecorator, batchPreparer, entityList);
+	}
+
+	public <T> void batch(int batchSize, String sql, Decorator<T> toDecorator, BatchPreparer<T> batchPreparer, List<T> entityList) {
+		batch(this.defaultPreparer, batchSize, sql, toDecorator, batchPreparer, entityList);
 	}
 
 	public static boolean checkBatch(int[] result) {
