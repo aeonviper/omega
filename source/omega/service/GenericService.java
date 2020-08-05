@@ -311,11 +311,6 @@ public class GenericService {
 	public <T> List<T> read(Preparer preparer, boolean asList, Class<T> clazz, Map<Class, Class> columnClassMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
 		List<T> resultList = new ArrayList<>();
 
-		Map<String, String> fieldMap = new HashMap<>();
-		for (Field field : getAllFields(new ArrayList<>(), clazz)) {
-			fieldMap.put(field.getName().toLowerCase(), field.getName());
-		}
-
 		Connection connection = persistenceService.get().getConnection();
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
@@ -329,7 +324,7 @@ public class GenericService {
 
 				String[] columnNameArray = new String[columnCount];
 				for (int column = 1; column <= columnCount; column++) {
-					columnNameArray[column - 1] = metaData.getColumnLabel(column).toLowerCase();
+					columnNameArray[column - 1] = metaData.getColumnLabel(column);
 				}
 
 				while (rs.next()) {
@@ -337,7 +332,14 @@ public class GenericService {
 					try {
 						for (int column = 1; column <= columnCount; column++) {
 							String databaseFieldName = columnNameArray[column - 1];
-							String entityFieldName = fieldMap.get(databaseFieldName);
+							String entityFieldName = null;
+
+							try {
+								BeanUtility.instance().getProperty(entity, databaseFieldName);
+								entityFieldName = databaseFieldName;
+							} catch (Exception e) {
+							}
+
 							if (entityFieldName != null) {
 								if (columnTypeMap != null && !columnTypeMap.isEmpty() && columnTypeMap.containsKey(entityFieldName)) {
 									BeanUtility.instance().setProperty(entity, entityFieldName, rs.getObject(column, columnTypeMap.get(entityFieldName)));
