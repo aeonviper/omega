@@ -15,6 +15,4 @@ public @interface Transactional {
 	String type() default "";
 
 	TransactionIsolation isolation() default TransactionIsolation.DEFAULT;
-
-	ExecutionType executionType() default ExecutionType.DEFAULT;
 }

@@ -17,6 +17,7 @@ import com.google.inject.name.Named;
 
 import common.BeanUtility;
 import common.Core;
+import common.Utility;
 import omega.annotation.Transactional;
 import omega.persistence.PersistenceService;
 
@@ -44,66 +45,6 @@ public class GenericService {
 	@Inject(optional = true)
 	public void setDefaultColumnTypeMap(@Named("DefaultColumnTypeMap") Map<String, Class> defaultColumnTypeMap) {
 		this.defaultColumnTypeMap = defaultColumnTypeMap;
-	}
-
-	public static <T> String join(T[] array, String delimiter, String open, String close) {
-		StringBuilder sb = new StringBuilder();
-		boolean first = true;
-		for (T t : array) {
-			if (!first) {
-				sb.append(delimiter);
-			} else {
-				first = false;
-			}
-			if (open != null) {
-				sb.append(open);
-			}
-			if (t != null) {
-				sb.append(t);
-			}
-			if (close != null) {
-				sb.append(close);
-			}
-		}
-		return sb.toString();
-	}
-
-	public static <T> String join(T[] array, String delimiter) {
-		return join(array, delimiter, null, null);
-	}
-
-	public static <T> String join(List<T> list, String delimiter, String open, String close) {
-		StringBuilder sb = new StringBuilder();
-		boolean first = true;
-		for (T t : list) {
-			if (!first) {
-				sb.append(delimiter);
-			} else {
-				first = false;
-			}
-			if (open != null) {
-				sb.append(open);
-			}
-			if (t != null) {
-				sb.append(t);
-			}
-			if (close != null) {
-				sb.append(close);
-			}
-		}
-		return sb.toString();
-	}
-
-	public static <T> String join(List<T> list, String delimiter) {
-		return join(list, delimiter, null, null);
-	}
-
-	public static String repeat(String element, int multiplier, String delimiter) {
-		List<String> list = new ArrayList<>();
-		for (int i = 0; i < multiplier; i++) {
-			list.add(element);
-		}
-		return join(list, ",");
 	}
 
 	// low level
@@ -253,7 +194,7 @@ public class GenericService {
 
 	@Transactional
 	public <T> int insert(String tableName, T entity, String... array) {
-		String sql = "insert into " + tableName + " (" + join(array, ",") + ") values (" + repeat("?", array.length, ",") + ")";
+		String sql = "insert into " + tableName + " (" + Utility.join(array, ",") + ") values (" + Utility.repeat("?", array.length, ",") + ")";
 		List parameterList = new ArrayList<>();
 		try {
 			for (String entry : array) {
@@ -282,7 +223,7 @@ public class GenericService {
 		for (String element : array) {
 			setList.add(element + " = ?");
 		}
-		String sql = "update " + tableName + " set " + join(setList, ",") + " where (" + sqlQualifier.toString() + ")";
+		String sql = "update " + tableName + " set " + Utility.join(setList, ",") + " where (" + sqlQualifier.toString() + ")";
 		List parameterList = new ArrayList<>();
 		try {
 			for (String entry : array) {

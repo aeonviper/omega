@@ -9,7 +9,6 @@ import org.aopalliance.intercept.MethodInvocation;
 
 import com.google.inject.Inject;
 
-import omega.annotation.ExecutionType;
 import omega.annotation.TransactionIsolation;
 import omega.annotation.Transactional;
 
@@ -58,13 +57,6 @@ public class TransactionInterceptor implements MethodInterceptor {
 
 				connection = dataSource.getConnection();
 				connection.setAutoCommit(false);
-
-				ExecutionType transactionalExecutionType = transactional.executionType();
-				if (transactionalExecutionType == ExecutionType.DEFAULT) {
-
-				} else if (transactionalExecutionType == ExecutionType.BATCH) {
-					// unimplemented
-				}
 
 				TransactionIsolation transactionalIsolation = transactional.isolation();
 				if (transactionalIsolation != TransactionIsolation.DEFAULT) {
