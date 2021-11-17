@@ -30,7 +30,7 @@ public class TransactionInterceptor implements MethodInterceptor {
 					dataSource = persistenceService.getDataSource(transactionType);
 				} else {
 					if (!persistenceService.isAllowed(persistenceService.get().getTransactionType(), transactional.type())) {
-						String message = "Transaction type progression not allowed ! Current transaction is " + persistenceService.get().getTransactionType() + " but method " + methodInvocation.getClass().getCanonicalName() + "." + methodInvocation.getMethod().getName() + " has transactional type " + transactional.type();
+						String message = "Transaction type progression not allowed! Current transaction is " + persistenceService.get().getTransactionType() + " but method " + methodInvocation.getClass().getCanonicalName() + "." + methodInvocation.getMethod().getName() + " has transactional type " + transactional.type();
 						throw new RuntimeException(this.getClass().getCanonicalName() + " - " + message);
 					}
 
@@ -41,7 +41,7 @@ public class TransactionInterceptor implements MethodInterceptor {
 					// if it wanted read write it should have specified read write in the beginning thus persistenceService would hold a read write data source
 					// in order for this to happen it means ThreadLocal of transaction type at beginning of thread execution is one value (read only) and got changed to a different value (read write) in the middle of thread execution, now the framework is re-checking and finding a different value
 					if (TransactionTypeService.isSet() && !persistenceService.get().getTransactionType().equals(TransactionTypeService.getTransactionType())) {
-						String message = "Transaction type mismatch ! Current Transaction is " + persistenceService.get().getTransactionType() + " but transaction type override is " + TransactionTypeService.getTransactionType();
+						String message = "Transaction type mismatch! Current Transaction is " + persistenceService.get().getTransactionType() + " but transaction type override is " + TransactionTypeService.getTransactionType();
 						throw new RuntimeException(this.getClass().getCanonicalName() + " - " + message);
 					}
 				}

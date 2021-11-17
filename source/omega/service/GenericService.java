@@ -348,7 +348,7 @@ public class GenericService {
 		return null;
 	}
 
-	public <T> T select(Class<T> clazz, String sql, Object... array) {
+	public <T> T selectFind(Class<T> clazz, String sql, Object... array) {
 		Builder<T> builder = new Builder<T>() {
 			public T build(ResultSet rs) throws SQLException {
 				return rs.getObject(1, clazz);
@@ -356,6 +356,16 @@ public class GenericService {
 		};
 
 		return find(builder, sql, array);
+	}
+
+	public <T> List<T> selectList(Class<T> clazz, String sql, Object... array) {
+		Builder<T> builder = new Builder<T>() {
+			public T build(ResultSet rs) throws SQLException {
+				return rs.getObject(1, clazz);
+			}
+		};
+
+		return list(builder, sql, array);
 	}
 
 	public <T> List<T> list(Class<T> clazz, Map<Class, Class> columnClassMap, Map<String, Class> columnTypeMap, String sql, Object... array) {
